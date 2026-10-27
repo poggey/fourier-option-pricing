@@ -28,11 +28,9 @@ def price_by_average(S0, K, r, T, vol):
     return np.exp(-r * T) * total ## discount back
 
 ## this converts prices into arrows, with deviations spread around the centre of the distribution, averaging them out spins the arrows around the origin, shrinking them as the spin (u) gets larger
-
 def fingerprint_bs(u, S0, r, T, vol):
-    m = centre_and_spread(S0, r, T, vol)[0]
-    fingerprint_u = np.exp((1j * u * m) * np.exp(0.5 * vol ** 2 * T * u ** 2))
-    return fingerprint_u
+    m, spread = centre_and_spread(S0, r, T, vol)
+    rotation = np.exp(1j * u * m)
+    shrink = np.exp(-0.5 * vol ** 2 * T * u ** 2)
+    return rotation * shrink
 
-def wound_up(v, S0, r, T, vol, damping):
-    return np.exp(-1j * v * np.log(S0)) * fingerprint_bs(v - 1j * damping, S0, r, T, vol) / (damping ** 2 + damping - v ** 2 + 1j * (2 * damping + 1) * v)
