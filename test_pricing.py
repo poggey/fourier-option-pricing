@@ -7,7 +7,8 @@ from pricing import (
     log_price_density,
     price_by_average,
     fingerprint_bs,
-    wound_up
+    wound_up,
+    price_one_strike,
 )
 
 ## The running example, used in every test
@@ -51,3 +52,9 @@ def test_wound_up_matches_direct_transform():
     upward, _ = quad(lambda k: np.sin(v * k) * f(k), -20, 12, limit=500)
     direct = sideways + 1j * upward
     assert abs(wound_up(v, S0, r, T, vol) - direct) / abs(direct) < 1e-6
+
+def test_one_strike_matches_bs():
+    for strike in [80, 100, 120]:
+        fourier = price_one_strike(S0, strike, r, T, vol)
+        exact = bs_price(S0, strike, r, T, vol)
+        assert abs(fourier - exact) < 1e-6
