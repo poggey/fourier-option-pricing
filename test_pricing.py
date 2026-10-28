@@ -66,3 +66,9 @@ def test_all_strikes_match_bs():
     near = (strikes > 80) & (strikes < 120)
     exact = bs_price(S0, strikes[near], r, T, vol)
     assert np.max(np.abs(prices[near] - exact)) < 1e-6
+
+def test_damping_does_not_change_price():
+    for strike in [80, 100, 120]:
+        weak = price_one_strike(S0, strike, r, T, vol, damping=1.0)
+        strong = price_one_strike(S0, strike, r, T, vol, damping=1.5)
+        assert abs(weak - strong) < 1e-6
