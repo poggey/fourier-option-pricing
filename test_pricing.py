@@ -3,9 +3,11 @@ from scipy.integrate import quad
 
 from pricing import (
     bs_price,
+    damped_price,
     log_price_density,
     price_by_average,
     fingerprint_bs,
+    wound_up
 )
 
 ## The running example, used in every test
@@ -35,3 +37,17 @@ def test_fingerprint_matches_direct_average():
     sideways, _ = quad(lambda s: np.cos(u * s) * density(s), 3, 6.5)
     upward, _ = quad(lambda s: np.sin(u * s) * density(s), 3, 6.5)
     assert abs(fingerprint_bs(u, S0, r, T, vol) - (sideways + 1j * upward)) < 1e-6
+
+
+def test_damping_pulls_left_end_to_zero():
+    tiny_K = 0.0001
+    assert bs_price(S0, tiny_K, r, T, vol) > 99
+    assert damped_price(S0, tiny_K, r, T, vol) < 0.001
+
+def test_wound_up_matches_direct_transform():
+    v = 2.0
+    f = lambda k: damped_price(S0, np.exp(k), r, T, vol)
+    sideways, _ = quad(lambda k: np.cos(v * k) * f(k), -20, 12, limit=500)
+    upward, _ = quad(lambda k: np.sin(v * k) * f(k), -20, 12, limit=500)
+    direct = sideways + 1j * upward
+    assert abs(wound_up(v, S0, r, T, vol) - direct) / abs(direct) < 1e-6

@@ -33,4 +33,16 @@ def fingerprint_bs(u, S0, r, T, vol):
     rotation = np.exp(1j * u * m)
     shrink = np.exp(-0.5 * vol ** 2 * T * u ** 2)
     return rotation * shrink
+## this is now the slow way see wound_up
+
+## this eliminates the issue of the left end of the distribution not converging to zero, by damping with a power of the strike price.
+def damped_price(S0, K, r, T, vol, damping=1.5):
+    return K ** damping * bs_price(S0, K, r, T, vol)
+
+## this gives fourier transform of the damped price
+def wound_up(v, S0, r, T, vol, damping=1.5):
+    discount = np.exp(-r * T)
+    shifted = v - (damping + 1) * 1j
+    bottom = damping ** 2 + damping - v ** 2 + 1j * (2 * damping + 1) * v
+    return discount * fingerprint_bs(shifted, S0, r, T, vol) / bottom
 
