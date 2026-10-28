@@ -54,6 +54,27 @@ def price_one_strike(S0, K, r, T, vol, damping=1.5):
     k = np.log(K)
     slice_at = lambda v: (np.exp(-1j * v * k) * wound_up(v, S0, r, T, vol, damping)).real
     total, _ = quad(slice_at, 0, 200, limit=500)
+    return undamp(total, k, damping)
+
+## the two evenly spaced lists, linked by the grid rule
+def fft_grids(S0, N=4096, spin_spacing=0.25):
+    strike_spacing = 2 * np.pi / (N * spin_spacing)
+    v = spin_spacing * np.arange(N)
+    k_start = np.log(S0) - N * strike_spacing / 2  ## puts S0 in the middle
+    k = k_start + strike_spacing * np.arange(N)
+    return v, k
+
+## turn the summed totals back into call prices: the 1/pi, then undamp
+def undamp(total, k, damping=1.5):
     return np.exp(-damping * k) / np.pi * total
 
+def price_all_strikes(S0, r, T, vol, damping=1.5, N=4096, spin_spacing=0.25):
+    v, k = fft_grids(S0, N, spin_spacing)
 
+    start_turn = np.exp(-1j * v * k[0])  ## the turn for the starting strike, which the FFT doesn't do
+    widths = np.full(N, spin_spacing)    ## each slice counts for one strip width
+    widths[0] = spin_spacing / 2         ## trapezium rule: the first edge counts half
+
+    slices = start_turn * wound_up(v, S0, r, T, vol, damping) * widths
+    totals = np.fft.fft(slices).real     ## the sum for every strike at once
+    return np.exp(k), undamp(totals, k, damping)

@@ -9,6 +9,7 @@ from pricing import (
     fingerprint_bs,
     wound_up,
     price_one_strike,
+    price_all_strikes
 )
 
 ## The running example, used in every test
@@ -58,3 +59,10 @@ def test_one_strike_matches_bs():
         fourier = price_one_strike(S0, strike, r, T, vol)
         exact = bs_price(S0, strike, r, T, vol)
         assert abs(fourier - exact) < 1e-6
+
+
+def test_all_strikes_match_bs():
+    strikes, prices = price_all_strikes(S0, r, T, vol)
+    near = (strikes > 80) & (strikes < 120)
+    exact = bs_price(S0, strikes[near], r, T, vol)
+    assert np.max(np.abs(prices[near] - exact)) < 1e-6
